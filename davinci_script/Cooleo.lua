@@ -84,6 +84,59 @@ local DIVIDER_CSS = [[
         max-height: 1px;
     }
 ]]
+local COMBOBOX_PLACEHOLDER_CSS = [[
+    QLabel
+    {
+        color: rgb(140, 140, 140);
+        font-size: 13px;
+        min-height: 26px;
+        max-height: 26px;
+        background-color: rgb(31,31,31);
+        border: 1px solid rgb(0,0,0);
+        border-top-right-radius: 0px;
+        border-bottom-right-radius: 0px;
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
+        padding-left: 4px;
+    }
+]]
+local COMBOBOX_ACTION_BUTTON_CSS = [[
+    QPushButton
+    {
+        border: 1px solid rgb(0,0,0);
+        border-top-right-radius: 4px;
+        border-bottom-right-radius: 4px;
+        border-top-left-radius: 0px;
+        border-bottom-left-radius: 0px;
+        border-left: 0px;
+        font-size: 22px;
+        min-height: 26px;
+        max-height: 26px;
+        min-width: 26px;
+        max-width: 26px;
+        background-color: rgb(31,31,31);
+    }
+    QPushButton:hover
+    {
+        color: rgb(255, 255, 255);
+    }
+    QPushButton:pressed
+    {
+        background-color: rgb(20,20,20);
+    }
+]]
+local SECTION_TITLE_CSS = [[
+    QLabel
+    {
+        color: rgb(255, 255, 255);
+        font-size: 13px;
+        font-weight: bold;
+    }
+    QLabel:!enabled
+    {
+        color: rgb(150, 150, 150);
+    }
+]]
 local function OpenURL(url)
     if bmd.openurl then
         bmd.openurl(url)
@@ -228,12 +281,54 @@ local function InstallScript()
     print("[Cooleo] Installed to " .. target_path)
     return true
 end
+
+local fusion_titles = {}
+local TEXT_TEMPLATE_FOLDER = "Timestamps"
+local function PopulateTextTemplates(win)
+    ClearTable(fusion_titles)
+    local combobox = win:Find("title_templates")
+    local title_stack = win:Find("title_stack")
+    local title_placeholder = win:Find("title_placeholder")
+    combobox:Clear()
+
+    local template_folder = nil
+    for i, subfolder in ipairs(mediaPool:GetRootFolder():GetSubFolderList()) do
+        if subfolder:GetName() == TEXT_TEMPLATE_FOLDER then
+            template_folder = subfolder
+            break
+        end
+    end
+
+    if template_folder == nil or #template_folder:GetClipList() == 0 then
+        if template_folder == nil then
+            title_placeholder:SetText("No '" .. TEXT_TEMPLATE_FOLDER .. "' Bin Found")
+        else
+            title_placeholder:SetText("No Text+ Templates Found")
+        end
+
+        title_stack:SetCurrentIndex(1)
+        combobox:SetEnabled(false)
+        combobox:SetVisible(false)
+        title_placeholder:SetVisible(true)
+        return
+    end
+
+    title_stack:SetCurrentIndex(0)
+    combobox:SetEnabled(true)
+    title_placeholder:SetVisible(false)
+    combobox:SetVisible(true)
+    for i, clip in ipairs(template_folder:GetClipList()) do
+        table.insert(fusion_titles, clip)
+        combobox:AddItems({clip:GetClipProperty("Clip Name")})
+    end
+end
+
 local function CreateToolWindow()
     local win = disp:AddWindow(
         {
             ID = winID,
             WindowTitle = "Cooleo",
-            Geometry = {100, 100, WINDOW_WIDTH, WINDOW_HEIGHT},
+            Geometry = {nil, nil, WINDOW_WIDTH, WINDOW_HEIGHT},
             Margin = 16,
 
             ui:VGroup {
@@ -242,27 +337,78 @@ local function CreateToolWindow()
                     Weight = 0,
                     ID = "install_bar",
                     Spacing = 0,
+                },
 
-                    ui:VGroup {
-                        ID = "root",
-                        Spacing = 4,
-                        FixedX = WINDOW_WIDTH,
-                        FixedY = WINDOW_HEIGHT,
-                        ui:Label {
-                            Weight = 0,
-                            ID = "title",
-                            Text = "Cooleo",
-                            Alignment = {AlignHCenter = true, AlignBottom = true},
-                            WordWrap = true,
-                            StyleSheet = [[
-                                QLabel {
-                                    color: rgb(255, 255, 255);
-                                    font-size: 13px;
-                                    font-weight: bold;
-                                }
-                            ]]
+                ui:VGroup {
+                    ID = "root",
+                    Spacing = 4,
+                    FixedX = WINDOW_WIDTH,
+                    FixedY = WINDOW_HEIGHT,
+                    ui:Label {
+                        Weight = 0,
+                        ID = "title",
+                        Text = "Cooleo",
+                        Alignment = {AlignHCenter = true, AlignBottom = true},
+                        WordWrap = true,
+                        StyleSheet = [[
+                            QLabel {
+                                color: rgb(255, 255, 255);
+                                font-size: 24px;
+                                font-weight: bold;
+                            }
+                        ]]
+                    },
+                    ui:VGap(24, 0),
+                    ui:Label
+                    {
+                        Text = "Timestamps",
+                        StyleSheet = SECTION_TITLE_CSS,
+                    },
+                    ui:VGap(8, 0),
+                    ui:HGroup
+                    {
+                        Spacing = 0,
+                        ui:Stack
+                        {
+                            ID = "title_stack",
+                            CurrentIndex = 0,
+                            ui:ComboBox
+                            {
+                                ID = "title_templates",
+                                MinimumSize = {10, 26}
+                            },
+                            ui:Label
+                            {
+                                ID = "title_placeholder",
+                                Visible = false,
+                                Text = "No '" .. TEXT_TEMPLATE_FOLDER .. "' Bin Found",
+                                ToolTip = "<qt>Add Text+ templates to the Media Pool in a Bin named '" .. TEXT_TEMPLATE_FOLDER .. "'</qt>",
+                                StyleSheet = COMBOBOX_PLACEHOLDER_CSS
+                            }
                         },
-                    }
+                        ui:Button
+                        {
+                            ID = "refresh_text_templates",
+                            Text = "↺",
+                            ToolTip = "Refresh Text+ Template List",
+                            StyleSheet = COMBOBOX_ACTION_BUTTON_CSS
+                        }
+                    },
+                    ui:VGap(16, 0),
+                    ui:VGroup {
+                        Weight = 0,
+                        ID = "start_bar",
+                        Spacing = 0,
+
+                        ui:HGroup {
+                            ui:Button {
+                                ID = "start_button",
+                                Text = "Start",
+                                StyleSheet = PRIMARY_ACTION_BUTTON_CSS
+                            }
+                        }
+                    },
+                    
                 }
             }
         }
@@ -292,7 +438,9 @@ local function CreateToolWindow()
         )
     end
 
-    function win.On.SnapCaptionsWin.Close(ev)
+    PopulateTextTemplates(win)
+
+    function win.On.Cooleo.Close(ev)
         disp:ExitLoop()
     end
 
@@ -307,6 +455,23 @@ local function CreateToolWindow()
         win:RecalcLayout()
     end
 
+    function win.On.refresh_text_templates.Clicked(ev)
+        PopulateTextTemplates(win)
+    end
+
+    function win.On.start_button.Clicked(ev)
+        local text_template_index = win:Find("title_templates").CurrentIndex + 1
+        if text_template_index == 0 then
+            local dialog = CreateDialog("No Timestaps Found",
+                                        "Please add a Timestamp template to the Media Pool in a bin named '" .. TEXT_TEMPLATE_FOLDER .. "' and try again.")
+            dialog:Show()
+            dialog:RecalcLayout()
+            return false
+        end
+
+        local item = fusion_titles[text_template_index]
+        print(item:GetClipProperty("File Path"))
+    end
 
     win:RecalcLayout()
     win:Show()
