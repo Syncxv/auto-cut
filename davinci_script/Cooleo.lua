@@ -137,6 +137,13 @@ local SECTION_TITLE_CSS = [[
         color: rgb(150, 150, 150);
     }
 ]]
+
+function timestampToFrames(timestamp, fps)
+    local hours, minutes, seconds, frames = string.match(timestamp, "(%d+):(%d+):(%d+):(%d+)")
+    local totalFrames = (hours * 3600 + minutes * 60 + seconds) * fps + frames
+    return totalFrames
+end
+
 local function OpenURL(url)
     if bmd.openurl then
         bmd.openurl(url)
@@ -470,7 +477,26 @@ local function CreateToolWindow()
         end
 
         local item = fusion_titles[text_template_index]
-        print(item:GetClipProperty("File Path"))
+        filePath = item:GetClipProperty("File Path")
+
+        local file = io.open(filePath, "r")
+        if not file then
+            local dialog = CreateDialog("Failed to open Timestamp template",
+                                        "Please add a Timestamp template to the Media Pool in a bin named '" .. TEXT_TEMPLATE_FOLDER .. "' and try again.")
+            dialog:Show()
+            dialog:RecalcLayout()
+            return false
+        end
+        for line in file:lines() do
+            local frameNumber = timestampToFrames(line, 24)
+             local timeline = project:GetCurrentTimeline()
+            if timeline then
+                result = timeline:AddMarker(frameNumber, "Green", "cool", "herherh", 1, nil)
+                print("Adding marker at frame " .. frameNumber .. " " .. tostring(result))
+            end
+        end
+
+        file:close()
     end
 
     win:RecalcLayout()
