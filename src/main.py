@@ -15,12 +15,17 @@ def main():
 
     threshold = average_pause * 1.5
 
+    cut_timestamps = []
+
     for pause, count in pauses:
         if pause > threshold:
             index = subtitles.index(next(sub for sub in subtitles if sub["count"] == count))
             sub = subtitles[index]
             
             print(f"Pause {count}: {pause:.2f}s\ncut_timestamp: {sub['end_time']}\n\n")
+            cut_timestamps.append(sub["end_time"])
+
+    write_text_to_file("\n".join(cut_timestamps), "./test/cut_timestamps.txt")
 
 
 if __name__ == "__main__":
