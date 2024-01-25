@@ -4,8 +4,6 @@ def timestamp_to_seconds(timestamp, framerate=24.0):
     h, m, s, f = map(int, timestamp.split(':'))
     return h * 3600 + m * 60 + s + f / framerate
 
-
-
 def get_args():
     args = sys.argv[1:]
     if len(args) != 1:
