@@ -17,7 +17,10 @@ def main():
 
     for pause, count in pauses:
         if pause > threshold:
-            print(f"Pause {count}: {pause:.2f}s")
+            index = subtitles.index(next(sub for sub in subtitles if sub["count"] == count))
+            sub = subtitles[index]
+            
+            print(f"Pause {count}: {pause:.2f}s\ncut_timestamp: {sub['end_time']}\n\n")
 
 
 if __name__ == "__main__":
