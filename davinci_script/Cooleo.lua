@@ -451,7 +451,7 @@ local function CreateToolWindow()
         disp:ExitLoop()
     end
 
-    function win.On.install.Clicked(ev)
+    function win.On.install_button.Clicked(ev)
         local success = InstallScript()
         if not success then
             return
