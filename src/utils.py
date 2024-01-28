@@ -6,13 +6,17 @@ def timestamp_to_seconds(timestamp, framerate=24.0):
     h, m, s, f = map(int, timestamp.split(':'))
     return h * 3600 + m * 60 + s + f / framerate
 
-def format_timestamp(timestamp):
+def format_timestamp_from_decimal(timestamp):
     hours = int(timestamp / 3600)
     minutes = int(timestamp / 60) % 60
     seconds = int(timestamp) % 60
     milliseconds = int((timestamp - int(timestamp)) * 1000)
 
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
+
+def format_timestamp_from_frames(frame_number, frame_rate):
+    timestamp = frame_number / frame_rate
+    return format_timestamp_from_decimal(timestamp)
 
 def milliseconds_to_frames(milliseconds, frame_rate):
     frames = int((milliseconds / 1000) * frame_rate + 0.5)
