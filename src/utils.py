@@ -59,11 +59,20 @@ def ensure_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
+def clean_frames_dir(path):
+    if not path.endswith("/frames"):
+        raise Exception("Path must end with '/frames'")
+    ensure_dir(path)
+    for file in os.listdir(path):
+        if file.endswith(".jpg"):
+            os.remove(os.path.join(path, file))
+
 @memoize
 def get_frame_rate(video_path):
     print("Getting frame rate...")
     output = subprocess.run(["ffprobe", "-v", "0", "-of", "csv=p=0", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", video_path], capture_output=True)
     return float(output.stdout.decode("utf-8").strip().split("/")[0])
+    
 
 if __name__ == "__main__":
     print("This file is not meant to be run directly.")

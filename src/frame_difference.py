@@ -1,37 +1,39 @@
 import cv2
-from utils import measure, write_text_to_file, format_timestamp_from_decimal, get_frame_rate
+from utils import measure, write_text_to_file, format_timestamp_from_decimal, get_frame_rate, clean_frames_dir
+import subprocess
+import os
+from concurrent.futures import ThreadPoolExecutor
 
 @measure
 def extract_frames(video_path, n):
-    cap = cv2.VideoCapture(video_path)
-    frames = []
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    clean_frames_dir("./dist/frames")
+    data = subprocess.run([
+        "ffmpeg",
+        "-i", video_path,
+        "-vf", f"select=not(mod(n\\,{n}))",
+        "-vsync", "vfr",
+        "-q:v", "50000",
+        "dist/frames/frame_%04d.jpg",
+        "-y"
+    ])
 
-    for frame_index in range(0, total_frames, n):
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
-        ret, frame = cap.read()
-        if not ret:
-            break
-        frames.append(frame)
+    if data.returncode != 0:
+        print("No frames found.")
+        print(data.stderr)
+        return None
 
-    cap.release()
+    frames = os.listdir("./dist/frames")
+    def read_frame(frame):
+        return cv2.imread(f"./dist/frames/{frame}")
+
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        frames = list(executor.map(read_frame, frames))
+
     return frames
 
-
-def resize_frame(frame, scale=0.5):
-    width = int(frame.shape[1] * scale)
-    height = int(frame.shape[0] * scale)
-    dimensions = (width, height)
-    return cv2.resize(frame, dimensions, interpolation=cv2.INTER_AREA)
-
-def convert_to_grayscale(frame):
-    return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
 def is_scene_change(frame1, frame2, threshold):
-    frame1_small_gray = convert_to_grayscale(resize_frame(frame1))
-    frame2_small_gray = convert_to_grayscale(resize_frame(frame2))
-    diff = cv2.absdiff(frame1_small_gray, frame2_small_gray)
-    non_zero_count = cv2.countNonZero(diff)
+    diff = cv2.absdiff(frame1, frame2)
+    non_zero_count = cv2.countNonZero(cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY))
     return non_zero_count > threshold
 
 @measure
@@ -49,9 +51,9 @@ def detect_scene_changes(video_path, threshold=50000, n=125):
     return list(map(format_timestamp_from_decimal, scene_changes))
 
 def main():
-    threshold = 50000
+    threshold = 500000 
 
-    scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 125)
+    scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 75)
 
     write_text_to_file("\n".join(scene_changes), "./test/scene_changes.srt")
 
