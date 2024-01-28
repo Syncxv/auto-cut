@@ -6,6 +6,9 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 
 
+def apply_gaussian_blur(frame, kernel_size=(5, 5)):
+    return cv2.GaussianBlur(frame, kernel_size, 0)
+
 @measure
 def extract_frames_ffmpeg(video_path, n):
     command = [
@@ -60,8 +63,11 @@ def read_frames():
     return frames
 
 
-def is_scene_change(frame1, frame2, threshold):
-    diff = cv2.absdiff(frame1, frame2)
+def is_scene_change(frame1, frame2, threshold, print_diff=False):
+    frame1_blurred = apply_gaussian_blur(frame1)
+    frame2_blurred = apply_gaussian_blur(frame2)
+
+    diff = cv2.absdiff(frame1_blurred, frame2_blurred)
 
     # Split the difference image into its color channels
     b_diff, g_diff, r_diff = cv2.split(diff)
@@ -74,7 +80,11 @@ def is_scene_change(frame1, frame2, threshold):
     # Sum up the non-zero values of all channels
     total_non_zero = b_non_zero + g_non_zero + r_non_zero
 
-    # print(total_non_zero)
+    if print_diff:
+        print(f"b: {b_non_zero}")
+        print(f"g: {g_non_zero}")
+        print(f"r: {r_non_zero}")
+        print(total_non_zero)
 
     return total_non_zero > threshold
 
@@ -95,16 +105,16 @@ def detect_scene_changes(video_path, threshold=50000, n=125):
 
 
 def main():
-    threshold = 275_000
+    threshold = 274_500
 
-    scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 50)
+    scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 15)
 
     write_text_to_file("\n".join(scene_changes), "./test/scene_changes.srt")
     
-    # frame1 = cv2.imread("./dist/frames/frame_0248.jpg")
-    # frame2 = cv2.imread("./dist/frames/frame_0246.jpg")
+    # frame1 = cv2.imread("./dist/frames/frame_0564.jpg")
+    # frame2 = cv2.imread("./dist/frames/frame_0565.jpg")
 
-    # print(is_scene_change(frame1, frame2, threshold))
+    # print(is_scene_change(frame1, frame2, threshold, True))
 
 
 if __name__ == "__main__":
