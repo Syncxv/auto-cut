@@ -4,10 +4,16 @@ import subprocess
 import os
 from concurrent.futures import ThreadPoolExecutor
 import json
+from skimage.metrics import structural_similarity as compare_ssim
+import numpy as np
+
 
 
 def apply_gaussian_blur(frame, kernel_size=(5, 5)):
     return cv2.GaussianBlur(frame, kernel_size, 0)
+
+def convert_to_grayscale(frame):
+    return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 @measure
 def extract_frames_ffmpeg(video_path, n):
@@ -62,31 +68,22 @@ def read_frames():
 
     return frames
 
+def process_frame(frame):
+    frame = apply_gaussian_blur(frame)
+    frame = convert_to_grayscale(frame)
+
+    return frame
 
 def is_scene_change(frame1, frame2, threshold, print_diff=False):
-    frame1_blurred = apply_gaussian_blur(frame1)
-    frame2_blurred = apply_gaussian_blur(frame2)
+    frame1_hsv = process_frame(frame1)
+    frame2_hsv = process_frame(frame2)
 
-    diff = cv2.absdiff(frame1_blurred, frame2_blurred)
-
-    # Split the difference image into its color channels
-    b_diff, g_diff, r_diff = cv2.split(diff)
-
-    # Calculate the sum of non-zero values for each channel
-    b_non_zero = cv2.countNonZero(b_diff)
-    g_non_zero = cv2.countNonZero(g_diff)
-    r_non_zero = cv2.countNonZero(r_diff)
-
-    # Sum up the non-zero values of all channels
-    total_non_zero = b_non_zero + g_non_zero + r_non_zero
+    ssim_index, _ = compare_ssim(frame1_hsv, frame2_hsv, full=True)
 
     if print_diff:
-        print(f"b: {b_non_zero}")
-        print(f"g: {g_non_zero}")
-        print(f"r: {r_non_zero}")
-        print(total_non_zero)
+        print(ssim_index)
 
-    return total_non_zero > threshold
+    return ssim_index < threshold
 
 
 @measure
@@ -105,16 +102,21 @@ def detect_scene_changes(video_path, threshold=50000, n=125):
 
 
 def main():
-    threshold = 274_500
+    threshold = 0.31
+    frame1 = cv2.imread("./dist/frames/frame_0511.jpg")
+    frame2 = cv2.imread("./dist/frames/frame_0512.jpg")
 
-    scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 15)
+    print(is_scene_change(frame1, frame2, threshold, True))
 
-    write_text_to_file("\n".join(scene_changes), "./test/scene_changes.srt")
+    frame1 = cv2.imread("./dist/frames/frame_0130.jpg")
+    frame2 = cv2.imread("./dist/frames/frame_0131.jpg")
+
+    print(is_scene_change(frame1, frame2, threshold, True))
+
+    # scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 24)
+
+    # write_text_to_file("\n".join(scene_changes), "./test/scene_changes.srt")
     
-    # frame1 = cv2.imread("./dist/frames/frame_0564.jpg")
-    # frame2 = cv2.imread("./dist/frames/frame_0565.jpg")
-
-    # print(is_scene_change(frame1, frame2, threshold, True))
 
 
 if __name__ == "__main__":
