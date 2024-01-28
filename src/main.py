@@ -5,7 +5,7 @@ import utils
 def main():
     [video_path] = utils.get_args()
     subtitle_timestamps = subtitle.detect_subtitle_pauses(video_path)
-    scene_change_timestamps = frame_difference.detect_scene_changes(video_path)
+    scene_change_timestamps = frame_difference.detect_scene_changes(video_path, 500000, 125)
 
     tolerance_seconds = 1.5
 

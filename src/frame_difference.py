@@ -49,7 +49,7 @@ def detect_scene_changes(video_path, threshold=50000, n=125):
     return list(map(format_timestamp_from_decimal, scene_changes))
 
 def main():
-    threshold = 100000
+    threshold = 50000
 
     scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 125)
 
