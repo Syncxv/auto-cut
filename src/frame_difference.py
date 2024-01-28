@@ -62,8 +62,21 @@ def read_frames():
 
 def is_scene_change(frame1, frame2, threshold):
     diff = cv2.absdiff(frame1, frame2)
-    non_zero_count = cv2.countNonZero(cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY))
-    return non_zero_count > threshold
+
+    # Split the difference image into its color channels
+    b_diff, g_diff, r_diff = cv2.split(diff)
+
+    # Calculate the sum of non-zero values for each channel
+    b_non_zero = cv2.countNonZero(b_diff)
+    g_non_zero = cv2.countNonZero(g_diff)
+    r_non_zero = cv2.countNonZero(r_diff)
+
+    # Sum up the non-zero values of all channels
+    total_non_zero = b_non_zero + g_non_zero + r_non_zero
+
+    # print(total_non_zero)
+
+    return total_non_zero > threshold
 
 
 @measure
@@ -82,11 +95,16 @@ def detect_scene_changes(video_path, threshold=50000, n=125):
 
 
 def main():
-    threshold = 5000
+    threshold = 275_000
 
     scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 50)
 
     write_text_to_file("\n".join(scene_changes), "./test/scene_changes.srt")
+    
+    # frame1 = cv2.imread("./dist/frames/frame_0248.jpg")
+    # frame2 = cv2.imread("./dist/frames/frame_0246.jpg")
+
+    # print(is_scene_change(frame1, frame2, threshold))
 
 
 if __name__ == "__main__":
