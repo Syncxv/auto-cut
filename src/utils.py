@@ -2,18 +2,19 @@ import sys
 import time
 import os
 import subprocess
+import json
 
 def timestamp_to_seconds(timestamp, framerate=24.0):
     h, m, s, f = map(int, timestamp.split(':'))
     return h * 3600 + m * 60 + s + f / framerate
 
-def format_timestamp_from_decimal(timestamp):
+def format_timestamp_from_decimal(timestamp, framerate=24.0):
     hours = int(timestamp / 3600)
     minutes = int(timestamp / 60) % 60
     seconds = int(timestamp) % 60
-    milliseconds = int((timestamp - int(timestamp)) * 1000)
+    frame = int((timestamp - int(timestamp)) * framerate)
 
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}:{frame:02d}"
 
 def format_timestamp_from_frames(frame_number, frame_rate):
     timestamp = frame_number / frame_rate
@@ -73,6 +74,19 @@ def get_frame_rate(video_path):
     output = subprocess.run(["ffprobe", "-v", "0", "-of", "csv=p=0", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", video_path], capture_output=True)
     return float(output.stdout.decode("utf-8").strip().split("/")[0])
     
+@memoize
+def get_video_duration(video_path):
+    command = [
+        "ffprobe", 
+        "-v", "error", 
+        "-show_entries", "format=duration", 
+        "-of", "json", 
+        video_path
+    ]
+    result = subprocess.run(command, stdout=subprocess.PIPE, text=True)
+    duration = json.loads(result.stdout)['format']['duration']
+    return float(duration)
+
 
 if __name__ == "__main__":
     print("This file is not meant to be run directly.")
