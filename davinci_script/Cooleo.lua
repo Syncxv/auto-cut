@@ -348,14 +348,14 @@ local function CreateToolWindow()
 
                 ui:VGroup {
                     ID = "root",
-                    Spacing = 4,
+                    Spacing = 0,
                     FixedX = WINDOW_WIDTH,
                     FixedY = WINDOW_HEIGHT,
                     ui:Label {
                         Weight = 0,
                         ID = "title",
                         Text = "Cooleo",
-                        Alignment = {AlignHCenter = true, AlignBottom = true},
+                        Alignment = {AlignHCenter = true},
                         WordWrap = true,
                         StyleSheet = [[
                             QLabel {
@@ -365,13 +365,7 @@ local function CreateToolWindow()
                             }
                         ]]
                     },
-                    ui:VGap(24, 0),
-                    ui:Label
-                    {
-                        Text = "Timestamps",
-                        StyleSheet = SECTION_TITLE_CSS,
-                    },
-                    ui:VGap(8, 0),
+                    ui:VGap(4, 0),
                     ui:HGroup
                     {
                         Spacing = 0,
@@ -398,23 +392,17 @@ local function CreateToolWindow()
                             ID = "refresh_text_templates",
                             Text = "↺",
                             ToolTip = "Refresh Text+ Template List",
-                            StyleSheet = COMBOBOX_ACTION_BUTTON_CSS
+                            StyleSheet = COMBOBOX_ACTION_BUTTON_CSS,
+                            -- align to the bottom of the hgroup
+                            Alignment = {AlignVCenter = true}
                         }
                     },
                     ui:VGap(16, 0),
-                    ui:VGroup {
-                        Weight = 0,
-                        ID = "start_bar",
-                        Spacing = 0,
-
-                        ui:HGroup {
-                            ui:Button {
-                                ID = "start_button",
-                                Text = "Start",
-                                StyleSheet = PRIMARY_ACTION_BUTTON_CSS
-                            }
-                        }
-                    },
+                    ui:Button {
+                        ID = "start_button",
+                        Text = "Start",
+                        StyleSheet = PRIMARY_ACTION_BUTTON_CSS
+                    }
                     
                 }
             }
