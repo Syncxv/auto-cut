@@ -105,7 +105,7 @@ def detect_subtitle_pauses(video_path: str):
             index = subtitles.index(next(sub for sub in subtitles if sub["count"]+1 == count))
             sub = subtitles[index]
             
-            print(f"Pause {count}: {pause:.2f}s\ncut_timestamp: {sub['end_time']}\n\n")
+            print(f"Pause {count}: {pause:.2f}s\ncut_timestamp: {sub['end_time']}\n")
             cut_timestamps.append(sub["end_time"])
 
     write_text_to_file("\n".join(cut_timestamps), "./test/cut_timestamps.srt")
