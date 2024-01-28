@@ -69,8 +69,8 @@ def read_frames():
     return frames
 
 def process_frame(frame):
-    frame = apply_gaussian_blur(frame)
-    frame = convert_to_grayscale(frame)
+    # frame = apply_gaussian_blur(frame)
+    # frame = convert_to_grayscale(frame)
 
     return frame
 
@@ -78,7 +78,7 @@ def is_scene_change(frame1, frame2, threshold, print_diff=False):
     frame1_hsv = process_frame(frame1)
     frame2_hsv = process_frame(frame2)
 
-    ssim_index, _ = compare_ssim(frame1_hsv, frame2_hsv, full=True)
+    ssim_index, _ = compare_ssim(frame1_hsv, frame2_hsv, channel_axis=2, full=True)
 
     if print_diff:
         print(ssim_index)
@@ -102,20 +102,20 @@ def detect_scene_changes(video_path, threshold=50000, n=125):
 
 
 def main():
-    threshold = 0.31
-    frame1 = cv2.imread("./dist/frames/frame_0511.jpg")
-    frame2 = cv2.imread("./dist/frames/frame_0512.jpg")
+    threshold = 0.29
+    # frame1 = cv2.imread("./dist/frames/frame_0511.jpg")
+    # frame2 = cv2.imread("./dist/frames/frame_0512.jpg")
 
-    print(is_scene_change(frame1, frame2, threshold, True))
+    # print(is_scene_change(frame1, frame2, threshold, True))
 
-    frame1 = cv2.imread("./dist/frames/frame_0130.jpg")
-    frame2 = cv2.imread("./dist/frames/frame_0131.jpg")
+    # frame1 = cv2.imread("./dist/frames/frame_0130.jpg")
+    # frame2 = cv2.imread("./dist/frames/frame_0131.jpg")
 
-    print(is_scene_change(frame1, frame2, threshold, True))
+    # print(is_scene_change(frame1, frame2, threshold, True))
 
-    # scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 24)
+    scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 24)
 
-    # write_text_to_file("\n".join(scene_changes), "./test/scene_changes.srt")
+    write_text_to_file("\n".join(scene_changes), "./test/scene_changes.srt")
     
 
 
