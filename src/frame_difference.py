@@ -1,5 +1,5 @@
 import cv2
-from utils import measure, write_text_to_file
+from utils import measure, write_text_to_file, format_timestamp
 FRAME_RATE = 24.0
 
 @measure
@@ -47,14 +47,6 @@ def detect_scene_changes(video_path, threshold=50000, n=125):
             scene_changes.append(timestamp)  # Store the timestamp
 
     return list(map(format_timestamp, scene_changes))
-
-def format_timestamp(timestamp):
-    hours = int(timestamp / 3600)
-    minutes = int(timestamp / 60) % 60
-    seconds = int(timestamp) % 60
-    milliseconds = int((timestamp - int(timestamp)) * 1000)
-
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
 
 def main():
     threshold = 50000
