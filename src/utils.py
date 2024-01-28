@@ -1,6 +1,7 @@
 import sys
 import time
 import os
+import subprocess
 
 def timestamp_to_seconds(timestamp, framerate=24.0):
     h, m, s, f = map(int, timestamp.split(':'))
@@ -45,7 +46,26 @@ def measure(func):
         return result
     return wrapper
 
+def memoize(func):
+    cache = {}
+    def wrapper(*args, **kwargs):
+        key = (args, tuple(kwargs.items()))
+        if key not in cache:
+            cache[key] = func(*args, **kwargs)
+        return cache[key]
+    return wrapper
 
 def ensure_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
+
+@memoize
+def get_frame_rate(video_path):
+    print("Getting frame rate...")
+    output = subprocess.run(["ffprobe", "-v", "0", "-of", "csv=p=0", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", video_path], capture_output=True)
+    return float(output.stdout.decode("utf-8").strip().split("/")[0])
+
+if __name__ == "__main__":
+    print("This file is not meant to be run directly.")
+    print("Please run main.py instead.")
+    sys.exit(1)

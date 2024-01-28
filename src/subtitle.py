@@ -10,6 +10,8 @@ def extract_subtitle_text(video_path):
     data = subprocess.run(["ffmpeg", "-i", video_path, "-map", "0:s:0", path_raw, "-y"])
 
     if data.returncode != 0:
+        print("No subtitles found.")
+        print(data.stderr)
         return None
 
     path_clean = "dist/subtitle_clean.srt"
@@ -100,7 +102,7 @@ def detect_subtitle_pauses(video_path: str):
 
     for pause, count in pauses:
         if pause > threshold:
-            index = subtitles.index(next(sub for sub in subtitles if sub["count"] == count))
+            index = subtitles.index(next(sub for sub in subtitles if sub["count"]+1 == count))
             sub = subtitles[index]
             
             print(f"Pause {count}: {pause:.2f}s\ncut_timestamp: {sub['end_time']}\n\n")
