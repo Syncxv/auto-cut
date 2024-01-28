@@ -1,5 +1,5 @@
 import cv2
-from utils import measure
+from utils import measure, write_text_to_file
 FRAME_RATE = 24.0
 
 @measure
@@ -36,7 +36,7 @@ def is_scene_change(frame1, frame2, threshold):
     return non_zero_count > threshold
 
 @measure
-def detect_scene_changes(video_path, threshold, n):
+def detect_scene_changes(video_path, threshold=50000, n=125):
     frames = extract_frames(video_path, n)
     scene_changes = []
 
@@ -46,13 +46,23 @@ def detect_scene_changes(video_path, threshold, n):
             timestamp = frame_number / FRAME_RATE  # Convert frame number to timestamp
             scene_changes.append(timestamp)  # Store the timestamp
 
-    return scene_changes
+    return list(map(format_timestamp, scene_changes))
+
+def format_timestamp(timestamp):
+    hours = int(timestamp / 3600)
+    minutes = int(timestamp / 60) % 60
+    seconds = int(timestamp) % 60
+    milliseconds = int((timestamp - int(timestamp)) * 1000)
+
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}:{milliseconds:03d}"
 
 def main():
-    threshold = 5000
+    threshold = 50000
 
-    scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 120)
-    print(scene_changes)
+    scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 125)
+
+    write_text_to_file("\n".join(scene_changes), "./test/scene_changes.srt")
+
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,5 @@
-from utils import timestamp_to_seconds
-
+from utils import timestamp_to_seconds, get_args, read_text_from_file, write_text_to_file
+import json
 def parse_subtitle(subtitle_text: str):
     count, timestamps, *head = subtitle_text.split("\n")
 
@@ -41,3 +41,28 @@ def get_pause_times(subtitles):
 
 
     return pauses
+
+def detect_subtitle_pauses(subtitle_path):
+    subtitle_text = read_text_from_file(subtitle_path)
+
+    subtitles = parse_all_subtitles(subtitle_text)
+    write_text_to_file(json.dumps(subtitles, indent=4), "./test/subtitles.json")
+
+    pauses = get_pause_times(subtitles)
+    average_pause = sum(pause for pause, _ in pauses) / len(pauses)
+
+    threshold = average_pause * 1.5
+
+    cut_timestamps = []
+
+    for pause, count in pauses:
+        if pause > threshold:
+            index = subtitles.index(next(sub for sub in subtitles if sub["count"] == count))
+            sub = subtitles[index]
+            
+            print(f"Pause {count}: {pause:.2f}s\ncut_timestamp: {sub['end_time']}\n\n")
+            cut_timestamps.append(sub["end_time"])
+
+    write_text_to_file("\n".join(cut_timestamps), "./test/cut_timestamps.srt")
+
+    return cut_timestamps
