@@ -24,9 +24,16 @@ def milliseconds_to_frames(milliseconds, frame_rate):
     frames = int((milliseconds / 1000) * frame_rate + 0.5)
     return frames
 
-def get_args():
+def timestamp_to_ffmpeg_format(timestamp, frame_rate):
+    hours, minutes, seconds, frames = map(int, timestamp.split(":"))
+    frames_to_seconds = frames / frame_rate
+    total_seconds = hours * 3600 + minutes * 60 + seconds + frames_to_seconds
+    return f"{hours:02}:{minutes:02}:{seconds:02}.{int(frames_to_seconds * 1000):03}"
+ 
+
+def get_args(count=3):
     args = sys.argv[1:]
-    if len(args) != 3:
+    if len(args) != count:
         return ["D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", .29, 24]
     return args
 
@@ -68,6 +75,14 @@ def clean_frames_dir(path):
         if file.endswith(".jpg"):
             os.remove(os.path.join(path, file))
 
+
+def clean_cut_video_dir(path):
+    if not path.endswith("/cut_video"):
+        raise Exception("Path must end with '/cut_video'")
+    ensure_dir(path)
+    for file in os.listdir(path):
+        if file.endswith(".mp4"):
+            os.remove(os.path.join(path, file))
 @memoize
 def get_frame_rate(video_path):
     print("Getting frame rate...")
