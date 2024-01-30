@@ -20,13 +20,11 @@ def extract_subtitle_text(video_path):
     return read_text_from_file(path_clean)
 
 def convert_subtitle_format(input_file, output_file, frame_rate):
-    # Regular expressions for matching timestamps and HTML tags
     timestamp_regex = r"(\d{2}:\d{2}:\d{2}),(\d{3})"
     html_tag_regex = r"<[^>]+>"
 
     with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
         for line in infile:
-            # Replace timestamps
             def replace_timestamp(match):
                 hours_minutes_seconds = match.group(1)
                 milliseconds = int(match.group(2))
@@ -34,7 +32,6 @@ def convert_subtitle_format(input_file, output_file, frame_rate):
                 return f"{hours_minutes_seconds}:{frames:02d}"
 
             line = re.sub(timestamp_regex, replace_timestamp, line)
-            # Remove HTML tags
             line = re.sub(html_tag_regex, '', line)
             outfile.write(line)
 

@@ -1,8 +1,8 @@
 import cv2
-from utils import measure, write_text_to_file, format_timestamp_from_decimal, get_frame_rate, get_video_duration, clean_frames_dir, read_text_from_file, ensure_dir
+from utils import measure, write_text_to_file, format_timestamp_from_decimal, get_frame_rate, get_video_duration, clean_frames_dir, read_text_from_file, ensure_dir, get_args
 import subprocess
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 from skimage.metrics import structural_similarity as compare_ssim
 import numpy as np
@@ -85,6 +85,12 @@ def is_scene_change(frame1, frame2, threshold, print_diff=False):
 
     return ssim_index < threshold
 
+def detect_scene_change_process_frame(frames, i, n, threshold, frame_rate):
+    if is_scene_change(frames[i-1], frames[i], threshold):
+        frame_number = i * n
+        timestamp = frame_number / frame_rate
+        return timestamp
+    return None
 
 @measure
 def detect_scene_changes(video_path, threshold=50000, n=125):
@@ -92,17 +98,40 @@ def detect_scene_changes(video_path, threshold=50000, n=125):
     frames = extract_frames_ffmpeg(video_path, n)
     scene_changes = []
 
-    for i in range(1, len(frames)):
-        if is_scene_change(frames[i-1], frames[i], threshold):
-            frame_number = i * n
-            timestamp = frame_number / frame_rate
-            scene_changes.append(timestamp)
+    with ThreadPoolExecutor(max_workers=12) as executor:
+        future_to_index = {executor.submit(detect_scene_change_process_frame, frames, i, n, threshold, frame_rate): i for i in range(1, len(frames))}
+        
+        for future in as_completed(future_to_index):
+            timestamp = future.result()
+            if timestamp is not None:
+                scene_changes.append(timestamp)
 
-    return list(map(lambda ts: format_timestamp_from_decimal(ts, frame_rate), scene_changes))
+    return scene_changes
 
+
+def group_timestamps(timestamps, threshold_seconds, frame_rate):
+    grouped_timestamps = []
+    current_group_start = None
+
+    for ts_seconds in timestamps:
+        
+        if current_group_start is None:
+            current_group_start = ts_seconds
+        else:
+            if ts_seconds - current_group_start <= threshold_seconds:
+                continue
+            else:
+                grouped_timestamps.append(current_group_start)
+                current_group_start = ts_seconds
+
+    # Add the last group start if not added
+    if current_group_start is not None:
+        grouped_timestamps.append(current_group_start)
+
+    return grouped_timestamps
 
 def main():
-    threshold = 0.29
+    # threshold = 0.29
     # frame1 = cv2.imread("./dist/frames/frame_0511.jpg")
     # frame2 = cv2.imread("./dist/frames/frame_0512.jpg")
 
@@ -113,9 +142,17 @@ def main():
 
     # print(is_scene_change(frame1, frame2, threshold, True))
 
-    scene_changes = detect_scene_changes("D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", threshold, 24)
+    [video_path, threshold, n] = get_args()
 
-    write_text_to_file("\n".join(scene_changes), "./test/scene_changes.srt")
+    frame_rate = get_frame_rate(video_path)
+    scene_changes = detect_scene_changes(video_path, float(threshold), int(n))
+
+    grouped_timestamps = group_timestamps(scene_changes, 8, frame_rate)
+    final_timestamps = list(map(lambda ts: format_timestamp_from_decimal(ts, frame_rate), grouped_timestamps))
+    
+    print(final_timestamps)
+
+    write_text_to_file("\n".join(final_timestamps), "./test/scene_changesBRUH.srt")
     
 
 

@@ -26,8 +26,8 @@ def milliseconds_to_frames(milliseconds, frame_rate):
 
 def get_args():
     args = sys.argv[1:]
-    if len(args) != 1:
-        return ["D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4"]
+    if len(args) != 3:
+        return ["D:\\DownloadsGang\\media\\fam guy\\Family Guy - S08E18 - Quagmire's Dad.mp4", .29, 24]
     return args
 
 def write_text_to_file(text, file_path):
