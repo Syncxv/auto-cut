@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 from skimage.metrics import structural_similarity as compare_ssim
 import numpy as np
-
+from cut_video import cut_video
 
 
 def apply_gaussian_blur(frame, kernel_size=(5, 5)):
@@ -147,12 +147,14 @@ def main():
     frame_rate = get_frame_rate(video_path)
     scene_changes = detect_scene_changes(video_path, float(threshold), int(n))
 
-    grouped_timestamps = group_timestamps(scene_changes, 8, frame_rate)
+    grouped_timestamps = group_timestamps(scene_changes, 6.5, frame_rate)
     final_timestamps = list(map(lambda ts: format_timestamp_from_decimal(ts, frame_rate), grouped_timestamps))
     
     print(final_timestamps)
 
     write_text_to_file("\n".join(final_timestamps), "./test/scene_changesBRUH.srt")
+
+    cut_video(video_path, final_timestamps)
     
 
 
